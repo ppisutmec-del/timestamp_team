@@ -920,20 +920,43 @@
             }
 
             try {
-                const res = await fetch(SCRIPT_URL + '?action=getRecords');
+                // เพิ่ม t เพื่อป้องกัน Browser ใช้งาน Cache ทำให้ข้อมูลเก่าและมาไม่ครบ
+                const timestamp = new Date().getTime();
+                const res = await fetch(SCRIPT_URL + '?action=getRecords&t=' + timestamp);
                 const result = await res.json();
                 if (result.status === 'success') {
                     const rawData = result.data;
                     allData = rawData.map(r => {
                         let dStr = r.date;
-                        if (dStr && dStr.includes('T')) dStr = dStr.split('T')[0];
+                        if (dStr && dStr.includes('T')) {
+                             // Google Sheets ส่งวันที่เวลา 00:00 น. ของไทยมาในรูปแบบ UTC (ถูกลบ 7 ชั่วโมง) 
+                             // เราจึงบวก 7 ชั่วโมงกลับเข้าไปเพื่อให้ได้วันที่(Date) ตรงตามที่ป้อนบน Sheet
+                             const localDate = new Date(new Date(dStr).getTime() + 7 * 3600 * 1000);
+                             dStr = localDate.toISOString().split('T')[0];
+                        }
+                        
+                        // ฟังก์ชั่นสำหรับแปลงเวลาจาก Google Sheets เป็นเวลาท้องถิ่น (แก้ไข Timezone ชดเชยอดีต +06:42:04 ของไทย)
+                        function formatGoogleTime(isoStr) {
+                            if (!isoStr || !isoStr.includes('T')) return isoStr;
+                            const tMatch = isoStr.match(/T(\d{2}):(\d{2}):(\d{2})/);
+                            if (!tMatch) return isoStr.split('T')[1].substring(0, 5);
+                            let h = parseInt(tMatch[1], 10), m = parseInt(tMatch[2], 10), s = parseInt(tMatch[3], 10);
+                            s += 4;   if (s >= 60) { s -= 60; m += 1; }
+                            m += 42;  if (m >= 60) { m -= 60; h += 1; }
+                            h += 6;   if (h >= 24) { h -= 24; }
+                            return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+                        }
+                        
+                        let sTime = formatGoogleTime(r.startTime);
+                        let eTime = formatGoogleTime(r.endTime);
+
                         return {
                             date: dStr,
                             task: r.taskName,
                             detail: r.description,
                             employees: r.employees ? r.employees.split(',').map(e => e.trim()).filter(e => e) : [],
-                            start: r.startTime,
-                            end: r.endTime,
+                            start: sTime,
+                            end: eTime,
                             hours: parseFloat(r.totalHours) || 0
                         };
                     });
