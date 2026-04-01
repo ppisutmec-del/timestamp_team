@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>บันทึกเวลา</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --blue-950: #0a1628;
+            --blue-900: #0d2145;
+            --blue-800: #1a3a6b;
+            --blue-700: #1e4d8c;
+            --blue-600: #2563b0;
+            --blue-500: #3b82f6;
+            --blue-400: #60a5fa;
+            --blue-300: #93c5fd;
+            --blue-200: #bfdbfe;
+            --blue-100: #dbeafe;
+            --blue-50: #eff6ff;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-400: #94a3b8;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --accent: #38bdf8;
+            --success: #22c55e;
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 22px;
+            --shadow-sm: 0 1px 4px rgba(10, 22, 40, 0.08);
+            --shadow-md: 0 4px 20px rgba(10, 22, 40, 0.12);
+            --shadow-lg: 0 8px 40px rgba(10, 22, 40, 0.18);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: var(--blue-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* ── TOP BAR ── */
+        .topbar {
+            background: linear-gradient(135deg, var(--blue-900) 0%, var(--blue-700) 100%);
+            padding: 18px 20px 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 16px rgba(13, 33, 69, 0.35);
+        }
+
+        .topbar-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .topbar-title {
+            font-family: 'Prompt', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--white);
+            letter-spacing: 0.02em;
+        }
+
+        .topbar-title span {
+            color: var(--blue-300);
+        }
+
+        .topbar-date {
+            font-size: 0.72rem;
+            color: var(--blue-300);
+            margin-top: 2px;
+        }
+
+        .btn-add {
+            background: var(--blue-500);
+            color: var(--white);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(59, 130, 246, 0.45);
+            cursor: pointer;
+            transition: transform .15s, background .15s;
+        }
+
+        .btn-add:active {
+            transform: scale(.92);
+            background: var(--blue-400);
+        }
+
+        /* ── PAGES ── */
+        .page {
+            display: none;
+            animation: fadeIn .22s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── FILTER SECTION ── */
+        .section-pad {
+            padding: 16px 16px 0;
+        }
+
+        .filter-card {
+            background: var(--white);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--blue-100);
+        }
+
+        .filter-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--blue-600);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-bottom: 10px;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--gray-600);
+            margin-bottom: 4px;
+        }
+
+        .filter-group input[type="date"] {
+            width: 100%;
+            border: 1.5px solid var(--blue-200);
+            border-radius: var(--radius-sm);
+            padding: 8px 10px;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 0.82rem;
+            color: var(--gray-800);
+            background: var(--blue-50);
+            outline: none;
+            transition: border-color .15s;
+        }
+
+        .filter-group input[type="date"]:focus {
+            border-color: var(--blue-500);
+            background: var(--white);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn-filter {
+            flex: 1;
+            padding: 9px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity .15s, transform .1s;
+        }
+
+        .btn-filter:active {
+            transform: scale(.97);
+        }
+
+        .btn-filter.primary {
+            background: var(--blue-600);
+            color: var(--white);
+        }
+
+        .btn-filter.secondary {
+            background: var(--blue-50);
+            color: var(--blue-600);
+            border: 1.5px solid var(--blue-200);
+        }
+
+        /* ── STATS ROW ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 14px 16px 0;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border-radius: var(--radius-md);
+            padding: 12px 10px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--blue-100);
+        }
+
+        .stat-num {
+            font-family: 'Prompt', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--blue-700);
+        }
+
+        .stat-desc {
+            font-size: 0.65rem;
+            color: var(--gray-400);
+            margin-top: 2px;
+        }
+
+        /* ── TABLE ── */
+        .table-wrap {
+            padding: 14px 16px 100px;
+            overflow-x: auto;
+        }
+
+        .table-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .table-title {
+            font-family: 'Prompt', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--blue-800);
+        }
+
+        .record-count {
+            font-size: 0.7rem;
+            color: var(--gray-400);
+            background: var(--blue-50);
+            border: 1px solid var(--blue-100);
+            border-radius: 20px;
+            padding: 2px 10px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 6px;
+        }
+
+        .data-table thead th {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--blue-600);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            padding: 6px 10px;
+            text-align: left;
+            background: transparent;
+        }
+
+        .data-table tbody tr {
+            background: var(--white);
+            box-shadow: var(--shadow-sm);
+            border-radius: var(--radius-sm);
+            transition: box-shadow .15s;
+        }
+
+        .data-table tbody tr:active {
+            box-shadow: var(--shadow-md);
+        }
+
+        .data-table tbody td {
+            padding: 10px 10px;
+            font-size: 0.78rem;
+            vertical-align: middle;
+            border-top: 1px solid var(--blue-50);
+            border-bottom: 1px solid var(--blue-50);
+        }
+
+        .data-table tbody td:first-child {
+            border-left: 3px solid var(--blue-400);
+            border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+        }
+
+        .data-table tbody td:last-child {
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        }
+
+        .badge-emp {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--white);
+            margin: 1px;
+        }
+
+        .emp-R {
+            background: #043e9d;
+        }
+
+        .emp-T {
+            background: #6366f1;
+        }
+
+        .emp-P {
+            background: #0ea5e9;
+        }
+
+        .emp-M {
+            background: #8b5cf6;
+        }
+
+        .emp-B {
+            background: #4879ec;
+        }
+
+        .emp-K {
+            background: #1495b8;
+        }
+
+        .hours-chip {
+            background: var(--blue-100);
+            color: var(--blue-700);
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .task-name {
+            font-weight: 600;
+            color: var(--blue-800);
+        }
+
+        .task-detail {
+            color: var(--gray-600);
+            font-size: 0.7rem;
+            margin-top: 1px;
+        }
+
+        .time-text {
+            color: var(--gray-600);
+            font-size: 0.72rem;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--gray-400);
+        }
+
+        .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+
+        .empty-text {
+            font-size: 0.85rem;
+        }
+
+        /* ── BOTTOM NAV ── */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: var(--white);
+            border-top: 1px solid var(--blue-100);
+            display: flex;
+            box-shadow: 0 -4px 20px rgba(13, 33, 69, 0.10);
+            z-index: 200;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0 12px;
+            cursor: pointer;
+            transition: color .15s;
+            color: var(--gray-400);
+            font-size: 0.62rem;
+            gap: 4px;
+            border: none;
+            background: none;
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        .nav-item .nav-icon {
+            font-size: 1.3rem;
+            transition: transform .15s;
+        }
+
+        .nav-item.active {
+            color: var(--blue-600);
+        }
+
+        .nav-item.active .nav-icon {
+            transform: scale(1.15);
+        }
+
+        .nav-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--blue-500);
+            opacity: 0;
+            margin-top: -2px;
+        }
+
+        .nav-item.active .nav-dot {
+            opacity: 1;
+        }
+
+        /* ── RECORD PAGE ── */
+        .record-page-pad {
+            padding: 18px 16px 100px;
+        }
+
+        .record-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: 22px 18px;
+            border: 1px solid var(--blue-100);
+        }
+
+        .record-card-title {
+            font-family: 'Prompt', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--blue-800);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .record-card-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(180deg, var(--blue-500), var(--blue-300));
+            border-radius: 3px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--blue-700);
+            margin-bottom: 6px;
+        }
+
+        .form-label .required {
+            color: #ef4444;
+            margin-left: 2px;
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            border: 1.5px solid var(--blue-200);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 0.85rem;
+            color: var(--gray-800);
+            background: var(--blue-50);
+            outline: none;
+            transition: border-color .15s, background .15s, box-shadow .15s;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            border-color: var(--blue-500);
+            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+
+        .form-textarea {
+            resize: none;
+            height: 76px;
+        }
+
+        .time-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* Employee Checkbox */
+        .emp-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .emp-check-label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: var(--blue-50);
+            border: 1.5px solid var(--blue-200);
+            border-radius: var(--radius-sm);
+            padding: 8px 10px;
+            cursor: pointer;
+            transition: border-color .15s, background .15s;
+            user-select: none;
+        }
+
+        .emp-check-label:has(input:checked) {
+            border-color: var(--blue-500);
+            background: var(--blue-100);
+        }
+
+        .emp-check-label input[type="checkbox"] {
+            display: none;
+        }
+
+        .emp-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--white);
+            flex-shrink: 0;
+        }
+
+        .emp-check-label span.emp-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--blue-800);
+        }
+
+        .check-mark {
+            margin-left: auto;
+            font-size: 0.7rem;
+            color: var(--blue-500);
+            opacity: 0;
+            transition: opacity .15s;
+        }
+
+        .emp-check-label:has(input:checked) .check-mark {
+            opacity: 1;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--blue-100);
+            margin: 18px 0;
+        }
+
+        .calc-hours {
+            background: linear-gradient(135deg, var(--blue-600), var(--blue-500));
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .calc-hours-label {
+            color: var(--blue-200);
+            font-size: 0.75rem;
+        }
+
+        .calc-hours-num {
+            font-family: 'Prompt', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .calc-hours-unit {
+            color: var(--blue-200);
+            font-size: 0.75rem;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            border-radius: var(--radius-md);
+            border: none;
+            background: linear-gradient(135deg, var(--blue-700), var(--blue-500));
+            color: var(--white);
+            font-family: 'Prompt', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: .03em;
+            box-shadow: 0 4px 16px rgba(37, 99, 176, 0.35);
+            cursor: pointer;
+            transition: transform .12s, box-shadow .12s;
+        }
+
+        .btn-submit:active {
+            transform: scale(.98);
+            box-shadow: 0 2px 8px rgba(37, 99, 176, 0.25);
+        }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: var(--blue-800);
+            color: var(--white);
+            padding: 10px 22px;
+            border-radius: 30px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s, transform .25s;
+            z-index: 999;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--blue-200);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="topbar-inner">
+            <div>
+                <div class="topbar-title">⏱ บันทึก<span>เวลา</span></div>
+                <div class="topbar-date" id="todayDate"></div>
+            </div>
+            <button class="btn-add" onclick="goToRecord()" title="เพิ่มรายการ">+</button>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- PAGE: HOME -->
+    <div class="page active" id="page-home">
+
+        <!-- FILTER -->
+        <div class="section-pad">
+            <div class="filter-card">
+                <div class="filter-label">🔍 กรองข้อมูล</div>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label>วันที่เริ่ม</label>
+                        <input type="date" id="filterStart" />
+                    </div>
+                    <div class="filter-group">
+                        <label>วันที่จบ</label>
+                        <input type="date" id="filterEnd" />
+                    </div>
+                </div>
+                <div class="filter-group" style="margin-top: 10px;">
+                    <label>พนักงาน</label>
+                    <select id="filterEmp" style="width: 100%; border: 1.5px solid var(--blue-200); border-radius: var(--radius-sm); padding: 8px 10px; font-family: 'Sarabun', sans-serif; font-size: 0.82rem; color: var(--gray-800); background: var(--blue-50); outline: none; transition: border-color .15s;">
+                        <option value="">-- พนักงานทุกคน --</option>
+                        <option value="R">ช่าง R</option>
+                        <option value="T">ช่าง T</option>
+                        <option value="P">ช่าง P</option>
+                        <option value="M">ช่าง M</option>
+                        <option value="B">ช่าง B</option>
+                        <option value="K">ช่าง K</option>
+                    </select>
+                </div>
+                <div class="filter-actions" style="margin-top: 12px;">
+                    <button class="btn-filter primary" onclick="applyFilter()">ค้นหา</button>
+                    <button class="btn-filter secondary" onclick="resetFilter()">รีเซ็ต</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-num" id="statTotal">0</div>
+                <div class="stat-desc">รายการทั้งหมด</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="statHours">0</div>
+                <div class="stat-desc">ชั่วโมงรวม</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="statEmp">0</div>
+                <div class="stat-desc">พนักงาน</div>
+            </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-wrap">
+            <div class="table-header-row">
+                <div class="table-title">รายการบันทึก</div>
+                <div class="record-count" id="recordCount">0 รายการ</div>
+            </div>
+            <div id="tableContainer">
+                <!-- Table rendered by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE: RECORD -->
+    <div class="page" id="page-record">
+        <div class="record-page-pad">
+            <div class="record-card">
+                <div class="record-card-title">บันทึกเวลาทำงาน</div>
+
+                <!-- Date -->
+                <div class="form-group">
+                    <label class="form-label">วันที่ <span class="required">*</span></label>
+                    <input type="date" class="form-input" id="recDate" />
+                </div>
+
+                <!-- Task Name -->
+                <div class="form-group">
+                    <label class="form-label">ชื่องาน <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="recTask" placeholder="ระบุชื่องาน..." />
+                </div>
+
+                <!-- Detail -->
+                <div class="form-group">
+                    <label class="form-label">รายละเอียดของงาน</label>
+                    <textarea class="form-textarea" id="recDetail" placeholder="อธิบายรายละเอียดงาน..."></textarea>
+                </div>
+
+                <!-- Employees -->
+                <div class="form-group">
+                    <label class="form-label">พนักงาน <span class="required">*</span></label>
+                    <div class="emp-grid">
+                        <label class="emp-check-label">
+                            <input type="checkbox" name="emp" value="R" />
+                            <div class="emp-avatar emp-R">R</div>
+                            <span class="emp-name">R</span>
+                            <span class="check-mark">✓</span>
+                        </label>
+                        <label class="emp-check-label">
+                            <input type="checkbox" name="emp" value="T" />
+                            <div class="emp-avatar emp-T">T</div>
+                            <span class="emp-name">T</span>
+                            <span class="check-mark">✓</span>
+                        </label>
+                        <label class="emp-check-label">
+                            <input type="checkbox" name="emp" value="P" />
+                            <div class="emp-avatar emp-P">P</div>
+                            <span class="emp-name">P</span>
+                            <span class="check-mark">✓</span>
+                        </label>
+                        <label class="emp-check-label">
+                            <input type="checkbox" name="emp" value="M" />
+                            <div class="emp-avatar emp-M">M</div>
+                            <span class="emp-name">M</span>
+                            <span class="check-mark">✓</span>
+                        </label>
+                        <label class="emp-check-label">
+                            <input type="checkbox" name="emp" value="B" />
+                            <div class="emp-avatar emp-B">B</div>
+                            <span class="emp-name">B</span>
+                            <span class="check-mark">✓</span>
+                        </label>
+                        <label class="emp-check-label">
+                            <input type="checkbox" name="emp" value="K" />
+                            <div class="emp-avatar emp-K">K</div>
+                            <span class="emp-name">K</span>
+                            <span class="check-mark">✓</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Time -->
+                <div class="form-group">
+                    <label class="form-label">ช่วงเวลาทำงาน <span class="required">*</span></label>
+                    <div class="time-row">
+                        <div class="filter-group">
+                            <label
+                                style="font-size:.72rem;color:var(--gray-600);margin-bottom:4px;display:block;">เวลาเริ่ม</label>
+                            <input type="time" class="form-input" id="recStart" oninput="calcHours()" />
+                        </div>
+                        <div class="filter-group">
+                            <label
+                                style="font-size:.72rem;color:var(--gray-600);margin-bottom:4px;display:block;">เวลาเลิก</label>
+                            <input type="time" class="form-input" id="recEnd" oninput="calcHours()" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Computed Hours -->
+                <div class="calc-hours">
+                    <div>
+                        <div class="calc-hours-label">จำนวนชั่วโมงทำงาน</div>
+                    </div>
+                    <div style="display:flex;align-items:baseline;gap:4px;">
+                        <div class="calc-hours-num" id="calcHoursNum">—</div>
+                        <div class="calc-hours-unit" id="calcHoursUnit">ชั่วโมง</div>
+                    </div>
+                </div>
+
+                <button class="btn-submit" onclick="submitRecord()">💾 บันทึกข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" id="nav-home" onclick="switchPage('home')">
+            <span class="nav-icon">🏠</span>
+            <span>หน้าหลัก</span>
+            <div class="nav-dot"></div>
+        </button>
+        <button class="nav-item" id="nav-record" onclick="switchPage('record')">
+            <span class="nav-icon">✏️</span>
+            <span>บันทึกเวลา</span>
+            <div class="nav-dot"></div>
+        </button>
+    </nav>
+
+    <script>
+        // ======= ตั้งค่า Web App URL =======
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwgGEA9Iv8zxIrzvuoROXv6T0QUIAuUgkYqy0UPIt12FiFX4sSb7h9ekgPf2SQRHT6J/exec';
+
+        let allData = [];
+        let filteredData = [];
+
+        // ── INIT ──
+        window.onload = () => {
+            const now = new Date();
+            document.getElementById('todayDate').textContent =
+                now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('recDate').value = now.toISOString().split('T')[0];
+
+            fetchData();
+        };
+
+        // ── FETCH ONS LOAD ──
+        async function fetchData() {
+            const container = document.getElementById('tableContainer');
+            container.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">กำลังโหลดข้อมูลเซิร์ฟเวอร์...</div></div>`;
+
+            if (SCRIPT_URL === 'YOUR_WEB_APP_URL') {
+                container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">กรุณาใส่ SCRIPT_URL ในหน้าโค้ดก่อนทำการทดสอบเสมือนจริง</div></div>`;
+                return;
+            }
+
+            try {
+                const res = await fetch(SCRIPT_URL + '?action=getRecords');
+                const result = await res.json();
+                if (result.status === 'success') {
+                    const rawData = result.data;
+                    allData = rawData.map(r => {
+                        let dStr = r.date;
+                        if (dStr && dStr.includes('T')) dStr = dStr.split('T')[0];
+                        return {
+                            date: dStr,
+                            task: r.taskName,
+                            detail: r.description,
+                            employees: r.employees ? r.employees.split(',').map(e => e.trim()).filter(e => e) : [],
+                            start: r.startTime,
+                            end: r.endTime,
+                            hours: parseFloat(r.totalHours) || 0
+                        };
+                    });
+
+                    // เรึยงวันที่จากใหม่ไปเก่า
+                    allData.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    filteredData = [...allData];
+                    renderTable(filteredData);
+                    updateStats(filteredData);
+                } else {
+                    container.innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><div class="empty-text">สถานะแจ้งเตือน: ${result.message}</div></div>`;
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔌</div><div class="empty-text">เชื่อมต่อขัดข้อง (กรุณาเช็คอินเทอร์เน็ต)</div></div>`;
+            }
+        }
+
+        // ── NAVIGATION ──
+        function switchPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            document.getElementById('nav-' + page).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function goToRecord() { switchPage('record'); }
+
+        // ── FILTER ──
+        function applyFilter() {
+            const s = document.getElementById('filterStart').value;
+            const e = document.getElementById('filterEnd').value;
+            const emp = document.getElementById('filterEmp').value;
+            
+            filteredData = allData.filter(d => {
+                if (s && d.date < s) return false;
+                if (e && d.date > e) return false;
+                if (emp && !d.employees.includes(emp)) return false;
+                return true;
+            });
+            renderTable(filteredData);
+            updateStats(filteredData);
+            showToast(`แสดง ${filteredData.length} รายการ`);
+        }
+
+        function resetFilter() {
+            document.getElementById('filterStart').value = '';
+            document.getElementById('filterEnd').value = '';
+            document.getElementById('filterEmp').value = '';
+            filteredData = [...allData];
+            renderTable(filteredData);
+            updateStats(filteredData);
+            showToast('รีเซ็ตตัวกรองแล้ว');
+        }
+
+        // ── STATS ──
+        function updateStats(data) {
+            const total = data.length;
+            const totalHours = data.reduce((s, d) => s + d.hours, 0);
+            const empSet = new Set(data.flatMap(d => d.employees));
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statHours').textContent = totalHours % 1 === 0 ? totalHours : totalHours.toFixed(1);
+            document.getElementById('statEmp').textContent = empSet.size;
+            document.getElementById('recordCount').textContent = total + ' รายการ';
+        }
+
+        // ── RENDER TABLE ──
+        function renderTable(data) {
+            const container = document.getElementById('tableContainer');
+            if (data.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">ไม่พบข้อมูลในช่วงเวลาที่เลือก</div></div>`;
+                return;
+            }
+            const empColors = { R: 'emp-R', T: 'emp-T', P: 'emp-P', M: 'emp-M', B: 'emp-B', K: 'emp-K' };
+            let rows = data.map(d => `
+      <tr>
+        <td>
+          <div style="font-size:.7rem;font-weight:600;color:var(--blue-600);">${formatDate(d.date)}</div>
+        </td>
+        <td>
+          <div class="task-name">${d.task}</div>
+          <div class="task-detail">${d.detail}</div>
+        </td>
+        <td>
+          <div style="display:flex;flex-wrap:wrap;gap:2px;">
+            ${d.employees.map(e => `<span class="badge-emp ${empColors[e]}">${e}</span>`).join('')}
+          </div>
+        </td>
+        <td>
+          <div class="time-text">${d.start}</div>
+          <div class="time-text">${d.end}</div>
+        </td>
+        <td><span class="hours-chip">${d.hours}h</span></td>
+      </tr>
+    `).join('');
+
+            container.innerHTML = `
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>วันที่</th>
+            <th>ชื่องาน / รายละเอียด</th>
+            <th>พนักงาน</th>
+            <th>เวลา</th>
+            <th>ชั่วโมง</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+        }
+
+        function formatDate(str) {
+            const d = new Date(str);
+            return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+        }
+
+        // ── CALC HOURS ──
+        function calcHours() {
+            const s = document.getElementById('recStart').value;
+            const e = document.getElementById('recEnd').value;
+            const numEl = document.getElementById('calcHoursNum');
+            const unitEl = document.getElementById('calcHoursUnit');
+            if (s && e) {
+                const [sh, sm] = s.split(':').map(Number);
+                const [eh, em] = e.split(':').map(Number);
+                let mins = (eh * 60 + em) - (sh * 60 + sm);
+                if (mins < 0) mins += 24 * 60;
+                const hrs = (mins / 60).toFixed(1);
+                numEl.textContent = hrs;
+                unitEl.textContent = 'ชั่วโมง';
+            } else {
+                numEl.textContent = '—';
+                unitEl.textContent = 'ชั่วโมง';
+            }
+        }
+
+        // ── SUBMIT ──
+        async function submitRecord() {
+            if (SCRIPT_URL === 'YOUR_WEB_APP_URL') {
+                showToast('⚠️ ระบุ SCRIPT_URL ในโค้ดก่อนเซฟข้อมูล');
+                return;
+            }
+
+            const date = document.getElementById('recDate').value;
+            const task = document.getElementById('recTask').value.trim();
+            const detail = document.getElementById('recDetail').value.trim();
+            const start = document.getElementById('recStart').value;
+            const end = document.getElementById('recEnd').value;
+            const emps = [...document.querySelectorAll('input[name="emp"]:checked')].map(e => e.value);
+
+            if (!date || !task || !start || !end || emps.length === 0) {
+                showToast('⚠️ กรุณากรอกข้อมูลให้ครบถ้วนและเลือกชื่อพนักงาน');
+                return;
+            }
+
+            const [sh, sm] = start.split(':').map(Number);
+            const [eh, em] = end.split(':').map(Number);
+            let mins = (eh * 60 + em) - (sh * 60 + sm);
+            if (mins < 0) mins += 24 * 60;
+            const hours = parseFloat((mins / 60).toFixed(1));
+
+            const btn = document.querySelector('.btn-submit');
+            const oldText = btn.innerHTML;
+            btn.innerHTML = '⏳ กำลังบันทึกเซิร์ฟเวอร์...';
+            btn.disabled = true;
+
+            const payload = {
+                date: date,
+                taskName: task,
+                description: detail,
+                employees: emps,
+                startTime: start,
+                endTime: end,
+                totalHours: hours
+            };
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showToast('✅ บันทึกเข้าระบบแล้ว!');
+
+                    // นำข้อมูลโชว์ใน local แบบ responsive ให้ผู้ใช้เห็นทันที
+                    allData.unshift({ date, task, detail, employees: emps, start, end, hours });
+                    filteredData = [...allData];
+                    renderTable(filteredData);
+                    updateStats(filteredData);
+
+                    // เคลียร์ค่าฟอร์ม
+                    document.getElementById('recTask').value = '';
+                    document.getElementById('recDetail').value = '';
+                    document.getElementById('recStart').value = '';
+                    document.getElementById('recEnd').value = '';
+                    document.querySelectorAll('input[name="emp"]').forEach(e => e.checked = false);
+                    document.getElementById('calcHoursNum').textContent = '—';
+
+                    setTimeout(() => switchPage('home'), 600);
+                } else {
+                    showToast('❌ ข้อผิดพลาด: ' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('❌ ขัดข้องทางการส่ง (CORS หรือ URL ผิดไปจากเดิม)');
+            } finally {
+                btn.innerHTML = oldText;
+                btn.disabled = false;
+            }
+        }
+
+        // ── TOAST ──
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2200);
+        }
+    </script>
+</body>
+
+</html>
