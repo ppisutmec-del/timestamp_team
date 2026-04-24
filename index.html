@@ -731,7 +731,8 @@
                 </div>
                 <div class="filter-group" style="margin-top: 10px;">
                     <label>พนักงาน</label>
-                    <select id="filterEmp" style="width: 100%; border: 1.5px solid var(--blue-200); border-radius: var(--radius-sm); padding: 8px 10px; font-family: 'Sarabun', sans-serif; font-size: 0.82rem; color: var(--gray-800); background: var(--blue-50); outline: none; transition: border-color .15s;">
+                    <select id="filterEmp"
+                        style="width: 100%; border: 1.5px solid var(--blue-200); border-radius: var(--radius-sm); padding: 8px 10px; font-family: 'Sarabun', sans-serif; font-size: 0.82rem; color: var(--gray-800); background: var(--blue-50); outline: none; transition: border-color .15s;">
                         <option value="">-- พนักงานทุกคน --</option>
                         <option value="R">ช่าง R</option>
                         <option value="T">ช่าง T</option>
@@ -929,24 +930,24 @@
                     allData = rawData.map(r => {
                         let dStr = r.date;
                         if (dStr && dStr.includes('T')) {
-                             // Google Sheets ส่งวันที่เวลา 00:00 น. ของไทยมาในรูปแบบ UTC (ถูกลบ 7 ชั่วโมง) 
-                             // เราจึงบวก 7 ชั่วโมงกลับเข้าไปเพื่อให้ได้วันที่(Date) ตรงตามที่ป้อนบน Sheet
-                             const localDate = new Date(new Date(dStr).getTime() + 7 * 3600 * 1000);
-                             dStr = localDate.toISOString().split('T')[0];
+                            // Google Sheets ส่งวันที่เวลา 00:00 น. ของไทยมาในรูปแบบ UTC (ถูกลบ 7 ชั่วโมง) 
+                            // เราจึงบวก 7 ชั่วโมงกลับเข้าไปเพื่อให้ได้วันที่(Date) ตรงตามที่ป้อนบน Sheet
+                            const localDate = new Date(new Date(dStr).getTime() + 7 * 3600 * 1000);
+                            dStr = localDate.toISOString().split('T')[0];
                         }
-                        
+
                         // ฟังก์ชั่นสำหรับแปลงเวลาจาก Google Sheets เป็นเวลาท้องถิ่น (แก้ไข Timezone ชดเชยอดีต +06:42:04 ของไทย)
                         function formatGoogleTime(isoStr) {
                             if (!isoStr || !isoStr.includes('T')) return isoStr;
                             const tMatch = isoStr.match(/T(\d{2}):(\d{2}):(\d{2})/);
                             if (!tMatch) return isoStr.split('T')[1].substring(0, 5);
                             let h = parseInt(tMatch[1], 10), m = parseInt(tMatch[2], 10), s = parseInt(tMatch[3], 10);
-                            s += 4;   if (s >= 60) { s -= 60; m += 1; }
-                            m += 42;  if (m >= 60) { m -= 60; h += 1; }
-                            h += 6;   if (h >= 24) { h -= 24; }
+                            s += 4; if (s >= 60) { s -= 60; m += 1; }
+                            m += 42; if (m >= 60) { m -= 60; h += 1; }
+                            h += 6; if (h >= 24) { h -= 24; }
                             return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
                         }
-                        
+
                         let sTime = formatGoogleTime(r.startTime);
                         let eTime = formatGoogleTime(r.endTime);
 
@@ -963,9 +964,14 @@
 
                     // เรึยงวันที่จากใหม่ไปเก่า
                     allData.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    filteredData = [...allData];
-                    renderTable(filteredData);
-                    updateStats(filteredData);
+
+                    // กำหนดค่า Default ให้อยู่ในช่วงรอบบิล (26 ถึง 25)
+                    const defDates = getDefaultDateRange();
+                    document.getElementById('filterStart').value = defDates.startStr;
+                    document.getElementById('filterEnd').value = defDates.endStr;
+
+                    // ทำการกรองข้อมูลรอบบิลเริ่มต้นทันที
+                    applyFilter();
                 } else {
                     container.innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><div class="empty-text">สถานะแจ้งเตือน: ${result.message}</div></div>`;
                 }
@@ -987,11 +993,42 @@
         function goToRecord() { switchPage('record'); }
 
         // ── FILTER ──
+        function getDefaultDateRange() {
+            const today = new Date();
+            const currentDay = today.getDate();
+            let startMonth = today.getMonth();
+            let startYear = today.getFullYear();
+            let endMonth = today.getMonth();
+            let endYear = today.getFullYear();
+
+            if (currentDay >= 26) {
+                // อยู่ในช่วงปลายเดือน (26 เป็นต้นไป) -> ดูจนถึง 25 เดือนหน้า
+                endMonth += 1;
+                if (endMonth > 11) {
+                    endMonth = 0;
+                    endYear += 1;
+                }
+            } else {
+                // อยู่ในช่วงต้นเดือน (1 - 25) -> ดูตั้งแต่ 26 เดือนก่อน
+                startMonth -= 1;
+                if (startMonth < 0) {
+                    startMonth = 11;
+                    startYear -= 1;
+                }
+            }
+
+            const pad = n => n.toString().padStart(2, '0');
+            const startStr = `${startYear}-${pad(startMonth + 1)}-26`;
+            const endStr = `${endYear}-${pad(endMonth + 1)}-25`;
+
+            return { startStr, endStr };
+        }
+
         function applyFilter() {
             const s = document.getElementById('filterStart').value;
             const e = document.getElementById('filterEnd').value;
             const emp = document.getElementById('filterEmp').value;
-            
+
             filteredData = allData.filter(d => {
                 if (s && d.date < s) return false;
                 if (e && d.date > e) return false;
@@ -1004,13 +1041,12 @@
         }
 
         function resetFilter() {
-            document.getElementById('filterStart').value = '';
-            document.getElementById('filterEnd').value = '';
+            const defDates = getDefaultDateRange();
+            document.getElementById('filterStart').value = defDates.startStr;
+            document.getElementById('filterEnd').value = defDates.endStr;
             document.getElementById('filterEmp').value = '';
-            filteredData = [...allData];
-            renderTable(filteredData);
-            updateStats(filteredData);
-            showToast('รีเซ็ตตัวกรองแล้ว');
+            applyFilter();
+            showToast('รีเซ็ตเป็นช่วงรอบบิลปัจจุบัน');
         }
 
         // ── STATS ──
